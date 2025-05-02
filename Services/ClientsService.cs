@@ -1,4 +1,5 @@
-﻿using NuGet.Repositories;
+﻿using Microsoft.CodeAnalysis.Elfie.Diagnostics;
+using NuGet.Repositories;
 using Tutorial8.Models.DTOs;
 
 namespace Tutorial8.Services;
@@ -8,7 +9,7 @@ using Microsoft.Data.SqlClient;
 public class ClientsService : IClientsService
 {
     private readonly string _connectionString =
-        "Data Source=localhost, 1433; User=SA; Password=yourStrong(!)Password; Initial Catalog=apbd; Integrated Security=False;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False";
+        "Data Source=localhost, 1433; User=SA; Password=yourStrong(!)Password; Initial Catalog=master; Integrated Security=False;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False";
 
     public async Task<List<RegPay>> GetTrips(int Id)
     {
@@ -61,6 +62,61 @@ public class ClientsService : IClientsService
             }
         }
         return map.Values.ToList();
+    }
+
+    public async Task<bool> ifExist(int id)
+    {
+        using (var conn = new SqlConnection(_connectionString))
+        using (var cmd = new SqlCommand("SELECT 1 FROM Client WHERE IdClient = @Id", conn))
+        {
+            cmd.Parameters.AddWithValue("@Id", id);
+            await conn.OpenAsync();
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null;
+        }
+    }
+
+    public async Task<int> AddClient(ClientPOST addClient)
+    {
+        using var conn = new SqlConnection(_connectionString);
+        string comm = "Insert into Client (FirstName,LastName,Email,Telephone,Pesel) VALUES (@FirstName,@LastName,@Email,@Telephone,@Pesel) Select SCOPE_IDENTITY();";
+        using (SqlCommand cmd = new SqlCommand(comm, conn))
+        {
+            cmd.Parameters.AddWithValue("@FirstName", addClient.FirstName);
+            cmd.Parameters.AddWithValue("@LastName", addClient.LastName);
+            cmd.Parameters.AddWithValue("@Email", addClient.Email);
+            cmd.Parameters.AddWithValue("@Telephone", addClient.Telephone);
+            cmd.Parameters.AddWithValue("@Pesel", addClient.Pesel);
+            
+            await conn.OpenAsync();
+            var result = await cmd.ExecuteScalarAsync();
+            return Convert.ToInt32(result);
+        }
+        
+    }
+
+    public async Task<bool> AddClientToTrip(int ClientId, int TripId)
+    {
+        using var conn = new SqlConnection(_connectionString);
+        string comm = "Insert into Client_Trip (IdClient,IdTrip,RegisteredAt,PaymentDate) VALUES (@IdClient,@IdTrip,@RegisteredAt,@PaymentDate)";
+        using (SqlCommand cmd = new SqlCommand(comm, conn))
+        {
+            cmd.Parameters.AddWithValue("@IdClient", ClientId);
+            cmd.Parameters.AddWithValue("@IdTrip", TripId);
+            cmd.Parameters.AddWithValue("@RegisteredAt", int.Parse(DateTime.Now.ToString("yyyyMMdd")));
+            cmd.Parameters.AddWithValue("@PaymentDate",DBNull.Value);
+            try
+            {
+                await conn.OpenAsync();
+                int rowsAffected = await cmd.ExecuteNonQueryAsync();
+                return rowsAffected > 0;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+            
+        }
     }
 }
     

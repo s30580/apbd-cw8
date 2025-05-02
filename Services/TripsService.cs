@@ -5,7 +5,7 @@ namespace Tutorial8.Services;
 
 public class TripsService : ITripsService
 {
-    private readonly string _connectionString = "Data Source=localhost, 1433; User=SA; Password=yourStrong(!)Password; Initial Catalog=apbd; Integrated Security=False;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False";
+    private readonly string _connectionString = "Data Source=localhost, 1433; User=SA; Password=yourStrong(!)Password; Initial Catalog=master; Integrated Security=False;Connect Timeout=30;Encrypt=False;Trust Server Certificate=False";
     
     public async Task<List<TripDTO>> GetTrips()
     {
@@ -50,5 +50,38 @@ public class TripsService : ITripsService
             }
         }
         return dic.Values.ToList();
+    }
+
+    public async Task<bool> ifExist(int id)
+    {
+        using (var conn = new SqlConnection(_connectionString))
+        using (var cmd = new SqlCommand("SELECT 1 FROM Trip WHERE IdTrip = @Id", conn))
+        {
+            cmd.Parameters.AddWithValue("@Id", id);
+            await conn.OpenAsync();
+            var result = await cmd.ExecuteScalarAsync();
+            return result != null;
+        }
+    }
+    public async Task<bool> ifMaxPeople(int id)
+    {
+        int currentPeople;
+        int maxPeople;
+
+        using (var conn = new SqlConnection(_connectionString))
+        {
+            await conn.OpenAsync();
+            using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Client_Trip WHERE IdTrip = @TripId", conn))
+            {
+                cmd.Parameters.AddWithValue("@TripId", id);
+                currentPeople = (int)(await cmd.ExecuteScalarAsync());
+            }
+            using (var cmd = new SqlCommand("SELECT MaxPeople FROM Trip WHERE IdTrip = @TripId", conn))
+            {
+                cmd.Parameters.AddWithValue("@TripId", id);
+                maxPeople = (int)await cmd.ExecuteScalarAsync();
+            }
+        }
+        return currentPeople < maxPeople;
     }
 }
