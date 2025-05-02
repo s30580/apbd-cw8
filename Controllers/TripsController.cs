@@ -15,21 +15,12 @@ namespace Tutorial8.Controllers
             _tripsService = tripsService;
         }
 
+        //zwraca listę wszystkich wycieczek
         [HttpGet]
         public async Task<IActionResult> GetTrips()
         {
             var trips = await _tripsService.GetTrips();
             return Ok(trips);
-        }
-
-        [HttpGet("{id}")]
-        public async Task<IActionResult> GetTrip(int id)
-        {
-            // if( await DoesTripExist(id)){
-            //  return NotFound();
-            // }
-            // var trip = ... GetTrip(id);
-            return Ok();
         }
     }
 }

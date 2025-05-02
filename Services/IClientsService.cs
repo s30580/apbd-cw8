@@ -10,4 +10,7 @@ public interface IClientsService
     Task<int> AddClient(ClientPOST addClient);
     
     Task<bool> AddClientToTrip(int ClientId, int TripId);
+    
+    Task<bool> RemoveClientFromTrip(int ClientId, int TripId);
+    Task<bool> CheckClientFromTrip(int ClientId, int TripId);
 }

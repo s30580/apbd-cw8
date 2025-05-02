@@ -10,6 +10,7 @@ public class TripsService : ITripsService
     public async Task<List<TripDTO>> GetTrips()
     {
         Dictionary<int, TripDTO> dic = new Dictionary<int, TripDTO>();
+        //zapytanie zwraca nam dane wycieczki i dodatkowo nazwę kraju
         string command = "SELECT t.IdTrip, t.Name, t.Description, t.DateFrom, t.DateTo, t.MaxPeople, c.Name AS CountryName " +
                          "FROM Trip t " +
                          "JOIN Country_Trip ct ON t.IdTrip = ct.IdTrip " +
@@ -54,6 +55,7 @@ public class TripsService : ITripsService
 
     public async Task<bool> ifExist(int id)
     {
+        //zapytanie sql zwraca nam 1 gdy jest wycieczka o konkretnym id (lub nic w przypdaku jej braku)
         using (var conn = new SqlConnection(_connectionString))
         using (var cmd = new SqlCommand("SELECT 1 FROM Trip WHERE IdTrip = @Id", conn))
         {
@@ -71,11 +73,13 @@ public class TripsService : ITripsService
         using (var conn = new SqlConnection(_connectionString))
         {
             await conn.OpenAsync();
+            //zapytanie zlicza nam ilość clientów na dana wycieczkę w bazie danych
             using (var cmd = new SqlCommand("SELECT COUNT(*) FROM Client_Trip WHERE IdTrip = @TripId", conn))
             {
                 cmd.Parameters.AddWithValue("@TripId", id);
                 currentPeople = (int)(await cmd.ExecuteScalarAsync());
             }
+            //zapytanie zwraca atrybut maksymalna ilosc ludzi dla wycieczki o danym id
             using (var cmd = new SqlCommand("SELECT MaxPeople FROM Trip WHERE IdTrip = @TripId", conn))
             {
                 cmd.Parameters.AddWithValue("@TripId", id);

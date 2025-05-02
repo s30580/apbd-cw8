@@ -18,7 +18,7 @@ namespace Tutorial8.Controllers
             _clientsService = clientsService;
             _tripsService = new TripsService();
         }
-
+        //zwraca wycieczki dla klienta o danym id
         [HttpGet("{id}/trips")]
         public async Task<IActionResult> GetTrips(int id)
         {
@@ -34,6 +34,7 @@ namespace Tutorial8.Controllers
             return Ok(trips);
         }
 
+        //dodaje nam nowego klienta do bazy danych i zwraca jego id
         [HttpPost]
         public async Task<IActionResult> PostTrip([FromBody] ClientPOST client)
         {
@@ -56,13 +57,13 @@ namespace Tutorial8.Controllers
                 return StatusCode(500, ex.Message);
             }
         }
-
+        //dodaje nam klienta do wycieczki 
         [HttpPut("{id}/trips/{tripId}")]
         public async Task<IActionResult> PutTrip(int id, int tripId)
         {
             if (!await _clientsService.ifExist(id))
             {
-                return NotFound("Trip not found");
+                return NotFound("Client not found");
             }
             if (!await _tripsService.ifExist(tripId))
             {
@@ -77,9 +78,24 @@ namespace Tutorial8.Controllers
             bool res = await _clientsService.AddClientToTrip(id, tripId);
             if (!res)
             {
-                return StatusCode(500); 
+                return StatusCode(500,"Internal Server Error"); 
             }
             return StatusCode(201,"Client added to trip");
+        }
+        //usuwa nam klienta z bazy danych
+        [HttpDelete("{id}/trips/{tripId}")]
+        public async Task<IActionResult> DeleteTrip(int id, int tripId)
+        {
+            if (!await _clientsService.CheckClientFromTrip(id, tripId))
+            {
+                return NotFound("Client or Trip not found");
+            }
+            var res = await _clientsService.RemoveClientFromTrip(id, tripId);
+            if (!res)
+            {
+                return StatusCode(500, "Client was not removed");
+            }
+            return Ok("Client removed from trip");
         }
     }
 }
